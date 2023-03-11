@@ -59,29 +59,29 @@ func TestRouter_Search(t *testing.T) {
 		handler  http.Handler
 	}{
 		{
-			name:     "/のエンドポイントにハンドラを追加する",
+			name:     "/のエンドポイントのハンドラを取得する",
 			endpoint: "/",
 			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			}),
 		},
 		{
-			name:     "/helloのエンドポイントにハンドラを追加する",
+			name:     "/hoge/fugaのエンドポイントのハンドラを取得する",
+			endpoint: "/hoge/fuga",
+			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			}),
+		},
+		{
+			name:     "/helloのエンドポイントのハンドラを取得する",
 			endpoint: "/hello",
 			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			}),
 		},
 		{
-			name:     "/hogeのエンドポイントにハンドラを追加する",
+			name:     "/hogeのエンドポイントのハンドラを取得する",
 			endpoint: "/hoge",
-			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-			}),
-		},
-		{
-			name:     "/hoge/fugaのエンドポイントにハンドラを追加する",
-			endpoint: "/hoge/fuga",
 			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			}),
