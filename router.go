@@ -1,6 +1,8 @@
 package myrouter
 
-import "net/http"
+import (
+	"net/http"
+)
 
 type Node struct {
 	isRoot    bool
@@ -89,6 +91,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	handler := r.Search(req.Method, req.URL.Path)
 	if handler != nil {
 		handler.ServeHTTP(w, req)
+		return
 	}
 
 	w.WriteHeader(http.StatusNotFound)
