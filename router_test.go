@@ -86,6 +86,27 @@ func TestRouter_Search(t *testing.T) {
 
 			}),
 		},
+		{
+			name:     "/piyoのエンドポイントのハンドラを取得する",
+			endpoint: "/piyo",
+			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			}),
+		},
+		{
+			name:     "/piyo/hogeのエンドポイントのハンドラを取得する",
+			endpoint: "/piyo/hoge",
+			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			}),
+		},
+		{
+			name:     "/piyo/fugaのエンドポイントのハンドラを取得する",
+			endpoint: "/piyo/fuga",
+			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			}),
+		},
 	}
 
 	r := NewRouter()

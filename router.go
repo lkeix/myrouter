@@ -119,7 +119,6 @@ func (r *Router) insert(method, endpoint string, handler http.Handler) {
 
 func (r *Router) Search(method, endpoint string) http.Handler {
 	currentNode := r.tree
-	lcpIndex := 0
 	for {
 		nextNode := currentNode.longestCommonChild(endpoint)
 		if nextNode == nil {
@@ -131,6 +130,7 @@ func (r *Router) Search(method, endpoint string) http.Handler {
 			maxLen = len(endpoint)
 		}
 
+		lcpIndex := 0
 		for lcpIndex < maxLen && endpoint[lcpIndex] == nextNode.prefix[lcpIndex] {
 			lcpIndex++
 		}
@@ -141,7 +141,6 @@ func (r *Router) Search(method, endpoint string) http.Handler {
 			break
 		}
 	}
-
 	return currentNode.handlers[method]
 }
 
