@@ -1,7 +1,6 @@
 package myrouter
 
 import (
-	"context"
 	"net/http"
 )
 
@@ -275,9 +274,9 @@ func PathParam(r *http.Request, key string) string {
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	handler, params := r.Search(req.Method, req.URL.Path)
+	handler, _ := r.Search(req.Method, req.URL.Path)
 	if handler != nil {
-		req = req.WithContext(context.WithValue(req.Context(), paramsKey{}, params))
+		// req = req.WithContext(context.WithValue(req.Context(), paramsKey{}, params))
 		handler.ServeHTTP(w, req)
 		return
 	}
