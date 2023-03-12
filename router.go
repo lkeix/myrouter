@@ -13,13 +13,14 @@ const (
 )
 
 type Node struct {
-	isRoot   bool
-	prefix   string
-	children []*Node
-	parent   *Node
-	nodeType nodeType
-	param    *Param
-	handlers map[string]http.Handler
+	isRoot     bool
+	prefix     string
+	children   []*Node
+	paramChild *Node
+	parent     *Node
+	nodeType   nodeType
+	param      *Param
+	handlers   map[string]http.Handler
 }
 
 type Param struct {
@@ -107,7 +108,7 @@ func (r *Router) insert(method, endpoint string, handler http.Handler) {
 			for j < len(endpoint) && endpoint[j] != '/' {
 				j++
 			}
-			if child := currentNode.getParamChild(); child != nil {
+			if child := currentNode.paramChild; child != nil {
 				endpoint = endpoint[j:]
 				currentNode = child
 				continue
@@ -118,7 +119,7 @@ func (r *Router) insert(method, endpoint string, handler http.Handler) {
 			node.param = &Param{
 				key: key,
 			}
-			currentNode.children = append(currentNode.children, node)
+			currentNode.paramChild = node
 			nextNode := node
 			endpoint = endpoint[j:]
 			currentNode = nextNode
@@ -204,7 +205,7 @@ func (r *Router) staticSearch(currentNode *Node, method, endpoint string) (*Node
 }
 
 func (r *Router) paramSearch(currentNode *Node, method, endpoint string) (*Node, string) {
-	currentNode = currentNode.getParamChild()
+	currentNode = currentNode.paramChild
 	i := 0
 	for i < len(endpoint) && endpoint[i] != '/' {
 		i++
@@ -218,7 +219,7 @@ func (r *Router) paramSearch(currentNode *Node, method, endpoint string) (*Node,
 
 func backTrack(n *Node, endpoint string) (*Node, string) {
 	for {
-		paramChild := n.getParamChild()
+		paramChild := n.paramChild
 		if paramChild != nil {
 			return n, endpoint
 		}
