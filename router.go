@@ -1,22 +1,38 @@
 package myrouter
 
 import (
+	"context"
 	"net/http"
 )
 
+type nodeType int
+
+const (
+	static nodeType = iota
+	param
+)
+
 type Node struct {
-	isRoot    bool
-	character byte
-	prefix    string
-	children  []*Node
-	parent    *Node
-	handlers  map[string]http.Handler
+	isRoot   bool
+	prefix   string
+	children []*Node
+	parent   *Node
+	nodeType nodeType
+	param    *Param
+	handlers map[string]http.Handler
 }
 
-func newNode(parent *Node, prefix string) *Node {
+type Param struct {
+	key   string
+	value string
+}
+
+func newNode(parent *Node, prefix string, nodeType nodeType) *Node {
 	return &Node{
 		prefix:   prefix,
+		parent:   parent,
 		children: []*Node{},
+		nodeType: nodeType,
 		handlers: make(map[string]http.Handler),
 	}
 }
@@ -42,6 +58,16 @@ func (n *Node) longestCommonChild(prefix string) *Node {
 	}
 
 	return nextChild
+}
+
+func (n *Node) getParamChild() *Node {
+	for _, child := range n.children {
+		if child.nodeType == param {
+			return child
+		}
+	}
+
+	return nil
 }
 
 func (n *Node) RemoveChild(child *Node) {
@@ -72,14 +98,49 @@ func (r *Router) GET(endpoint string, handler http.Handler) {
 func (r *Router) insert(method, endpoint string, handler http.Handler) {
 	currentNode := r.tree
 
-	for i := 0; i < len(endpoint); i++ {
+	for {
+		if endpoint == "" {
+			break
+		}
+
+		if endpoint[0] == ':' {
+			j := 0
+			for j < len(endpoint) && endpoint[j] != '/' {
+				j++
+			}
+			if child := currentNode.getParamChild(); child != nil {
+				endpoint = endpoint[j:]
+				currentNode = child
+				continue
+			}
+
+			node := newNode(currentNode, endpoint[:j], param)
+			key := endpoint[1:j]
+			node.param = &Param{
+				key: key,
+			}
+			currentNode.children = append(currentNode.children, node)
+			nextNode := node
+			endpoint = endpoint[j:]
+			currentNode = nextNode
+			continue
+		}
+
 		nextNode := currentNode.longestCommonChild(endpoint)
 
+		j := 0
+		for ; j < len(endpoint); j++ {
+			if endpoint[j] == ':' {
+				break
+			}
+		}
+
 		if nextNode == nil {
-			node := newNode(currentNode, endpoint)
+			node := newNode(currentNode, endpoint[:j], static)
 			currentNode.children = append(currentNode.children, node)
 			currentNode = node
-			break
+			endpoint = endpoint[j:]
+			continue
 		}
 
 		lcpIndex := 0
@@ -102,7 +163,7 @@ func (r *Router) insert(method, endpoint string, handler http.Handler) {
 
 		parent := nextNode.parent
 		// ノードをアップデートする
-		node := newNode(parent, endpoint[:lcpIndex])
+		node := newNode(parent, endpoint[:lcpIndex], static)
 
 		nextNode.parent = node
 		nextNode.prefix = nextNode.prefix[lcpIndex:]
@@ -117,12 +178,11 @@ func (r *Router) insert(method, endpoint string, handler http.Handler) {
 	currentNode.handlers[method] = handler
 }
 
-func (r *Router) Search(method, endpoint string) http.Handler {
-	currentNode := r.tree
+func (r *Router) staticSearch(currentNode *Node, method, endpoint string) (*Node, string) {
 	for {
 		nextNode := currentNode.longestCommonChild(endpoint)
 		if nextNode == nil {
-			return nil
+			return currentNode, endpoint
 		}
 
 		maxLen := len(nextNode.prefix)
@@ -141,12 +201,81 @@ func (r *Router) Search(method, endpoint string) http.Handler {
 			break
 		}
 	}
-	return currentNode.handlers[method]
+	return currentNode, ""
+}
+
+func (r *Router) paramSearch(currentNode *Node, method, endpoint string) (*Node, string) {
+	currentNode = currentNode.getParamChild()
+	i := 0
+	for i < len(endpoint) && endpoint[i] != '/' {
+		i++
+	}
+
+	currentNode.param.value = endpoint[:i]
+	endpoint = endpoint[i:]
+
+	return currentNode, endpoint
+}
+
+func backTrack(n *Node, endpoint string) (*Node, string) {
+	for {
+		paramChild := n.getParamChild()
+		if paramChild != nil {
+			return n, endpoint
+		}
+
+		endpoint = n.prefix + endpoint
+		n = n.parent
+	}
+}
+
+func (r *Router) Search(method, endpoint string) (http.Handler, []*Param) {
+	currentNode := r.tree
+	var params []*Param
+	for {
+		currentNode, endpoint = r.staticSearch(currentNode, method, endpoint)
+		if endpoint == "" {
+			return currentNode.handlers[method], params
+		}
+
+		currentNode, endpoint = backTrack(currentNode, endpoint)
+		if currentNode == nil {
+			break
+		}
+
+		currentNode, endpoint = r.paramSearch(currentNode, method, endpoint)
+		params = append(params, &Param{
+			key:   currentNode.param.key,
+			value: currentNode.param.value,
+		})
+		if endpoint == "" {
+			return currentNode.handlers[method], params
+		}
+	}
+	return nil, params
+}
+
+type paramsKey struct{}
+
+func PathParam(r *http.Request, key string) string {
+	ctx := r.Context()
+	params, ok := ctx.Value(paramsKey{}).([]Param)
+	if !ok {
+		return ""
+	}
+
+	for _, p := range params {
+		if p.key == key {
+			return p.value
+		}
+	}
+	return ""
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	handler := r.Search(req.Method, req.URL.Path)
+	handler, params := r.Search(req.Method, req.URL.Path)
 	if handler != nil {
+		req = req.WithContext(context.WithValue(req.Context(), paramsKey{}, params))
 		handler.ServeHTTP(w, req)
 		return
 	}
