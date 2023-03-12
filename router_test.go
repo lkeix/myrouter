@@ -185,3 +185,59 @@ func TestRouter_Search(t *testing.T) {
 		})
 	}
 }
+
+func TestRouter_ServeHTTP(t *testing.T) {
+	testcases := []struct {
+		name           string
+		setendpoint    string
+		accessendpoint string
+		handler        http.Handler
+	}{
+		{
+			name:           "/のエンドポイントのハンドラを取得する",
+			setendpoint:    "/",
+			accessendpoint: "/",
+			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			}),
+		},
+		{
+			name:           "/hogeのエンドポイントのハンドラを取得する",
+			setendpoint:    "/hoge",
+			accessendpoint: "/hoge",
+			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			}),
+		},
+		{
+			name:           "/hoge/:profileのエンドポイントにハンドラを追加する",
+			setendpoint:    "/hoge/:profile",
+			accessendpoint: "/hoge/www",
+			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				p := PathParam(r, "profile")
+				fmt.Println(p)
+			}),
+		},
+		{
+			name:           "/:foo/hogeのエンドポイントにハンドラを追加する",
+			setendpoint:    "/:foo/hoge",
+			accessendpoint: "/www/hoge",
+			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				p := PathParam(r, "foo")
+				fmt.Println(p)
+			}),
+		},
+	}
+
+	r := NewRouter()
+	for _, testcase := range testcases {
+		r.GET(testcase.setendpoint, testcase.handler)
+	}
+
+	for _, testcase := range testcases {
+		t.Run(testcase.name, func(t *testing.T) {
+			req, _ := http.NewRequest(http.MethodGet, testcase.accessendpoint, nil)
+			r.ServeHTTP(nil, req)
+		})
+	}
+}

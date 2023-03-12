@@ -259,7 +259,7 @@ type paramsKey struct{}
 
 func PathParam(r *http.Request, key string) string {
 	ctx := r.Context()
-	params, ok := ctx.Value(paramsKey{}).([]Param)
+	params, ok := ctx.Value(paramsKey{}).([]*Param)
 	if !ok {
 		return ""
 	}
