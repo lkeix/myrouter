@@ -61,12 +61,11 @@ func (n *Node) longestCommonChild(prefix string) *Node {
 }
 
 func (n *Node) getParamChild() *Node {
-	for _, child := range n.children {
-		if child.nodeType == param {
-			return child
+	for i := 0; i < len(n.children); i++ {
+		if n.children[i].nodeType == param {
+			return n.children[i]
 		}
 	}
-
 	return nil
 }
 
@@ -233,14 +232,6 @@ func backTrack(n *Node, endpoint string) (*Node, string) {
 func (r *Router) Search(method, endpoint string) (http.Handler, []*Param) {
 	currentNode := r.tree
 	var params []*Param
-
-	slashCount := 0
-	for i := 0; i < len(endpoint); i++ {
-		if endpoint[i] == '/' {
-			slashCount++
-		}
-	}
-	params = make([]*Param, 0, slashCount)
 
 	for {
 		currentNode, endpoint = r.staticSearch(currentNode, method, endpoint)
