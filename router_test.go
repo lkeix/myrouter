@@ -187,6 +187,7 @@ func TestRouter_Search(t *testing.T) {
 }
 
 func TestRouter_ServeHTTP(t *testing.T) {
+	router := NewRouter()
 	testcases := []struct {
 		name           string
 		setendpoint    string
@@ -228,16 +229,14 @@ func TestRouter_ServeHTTP(t *testing.T) {
 			}),
 		},
 	}
-
-	r := NewRouter()
 	for _, testcase := range testcases {
-		r.GET(testcase.setendpoint, testcase.handler)
+		router.GET(testcase.setendpoint, testcase.handler)
 	}
 
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			req, _ := http.NewRequest(http.MethodGet, testcase.accessendpoint, nil)
-			r.ServeHTTP(nil, req)
+			router.ServeHTTP(nil, req)
 		})
 	}
 }
