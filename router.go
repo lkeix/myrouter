@@ -1,6 +1,7 @@
 package myrouter
 
 import (
+	"context"
 	"net/http"
 )
 
@@ -78,7 +79,8 @@ func (n *Node) RemoveChild(child *Node) {
 }
 
 type Router struct {
-	tree *Node
+	tree      *Node
+	paramsKey *paramsKey
 }
 
 func NewRouter() *Router {
@@ -87,6 +89,7 @@ func NewRouter() *Router {
 			isRoot:   true,
 			handlers: nil,
 		},
+		paramsKey: &paramsKey{},
 	}
 }
 
@@ -274,9 +277,9 @@ func PathParam(r *http.Request, key string) string {
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	handler, _ := r.Search(req.Method, req.URL.Path)
+	handler, params := r.Search(req.Method, req.URL.Path)
 	if handler != nil {
-		// req = req.WithContext(context.WithValue(req.Context(), paramsKey{}, params))
+		req = req.WithContext(context.WithValue(req.Context(), r.paramsKey, params))
 		handler.ServeHTTP(w, req)
 		return
 	}
