@@ -1,6 +1,7 @@
 package myrouter
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 )
@@ -218,13 +219,17 @@ func (r *Router) paramSearch(currentNode *Node, method, endpoint string) (*Node,
 }
 
 func backTrack(n *Node, endpoint string) (*Node, string) {
+	buf := bytes.NewBufferString(endpoint)
 	for {
 		paramChild := n.getParamChild()
 		if paramChild != nil {
-			return n, endpoint
+			return n, buf.String()
 		}
 
-		endpoint = n.prefix + endpoint
+		prefixBuf := bytes.NewBufferString(n.prefix)
+		prefixBuf.Write(buf.Bytes())
+		buf = prefixBuf
+
 		n = n.parent
 	}
 }
