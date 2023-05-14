@@ -310,18 +310,17 @@ func PathParam(r *http.Request, key string) string {
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	ctx := r.pool.Get().(*Context)
 	handler, params := r.Search(req.Method, req.URL.Path)
-	ctx.r = req
-	ctx.w = w
-	ctx.params = params
+	ctx := &Context{
+		r:      req,
+		w:      w,
+		params: params,
+	}
 	if handler != nil {
 		handler(ctx)
-		r.pool.Put(ctx)
 		return
 	}
 
 	w.WriteHeader(http.StatusNotFound)
 	w.Write([]byte("404 Not Found"))
-	r.pool.Put(ctx)
 }
