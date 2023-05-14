@@ -1,8 +1,8 @@
 package myrouter
 
 import (
-	"context"
 	"net/http"
+	"sync"
 )
 
 type nodeType int
@@ -20,7 +20,7 @@ type Node struct {
 	parent     *Node
 	nodeType   nodeType
 	param      *Param
-	handlers   map[string]http.Handler
+	handlers   map[string]CustomHandler
 }
 
 type Param struct {
@@ -28,13 +28,38 @@ type Param struct {
 	value string
 }
 
+type Context struct {
+	params []*Param
+	w      http.ResponseWriter
+	r      *http.Request
+}
+
+func (c *Context) Write(b []byte) {
+	c.w.Write(b)
+}
+
+func (c *Context) Param(key string) string {
+	for _, p := range c.params {
+		if p.key == key {
+			return p.value
+		}
+	}
+	return ""
+}
+
+func (c *Context) Request() *http.Request {
+	return c.r
+}
+
+type CustomHandler func(*Context)
+
 func newNode(parent *Node, prefix string, nodeType nodeType) *Node {
 	return &Node{
 		prefix:   prefix,
 		parent:   parent,
 		children: []*Node{},
 		nodeType: nodeType,
-		handlers: make(map[string]http.Handler),
+		handlers: make(map[string]CustomHandler),
 	}
 }
 
@@ -81,6 +106,7 @@ func (n *Node) RemoveChild(child *Node) {
 type Router struct {
 	tree      *Node
 	paramsKey *paramsKey
+	pool      sync.Pool
 }
 
 func NewRouter() *Router {
@@ -90,14 +116,21 @@ func NewRouter() *Router {
 			handlers: nil,
 		},
 		paramsKey: &paramsKey{},
+		pool: sync.Pool{
+			New: func() interface{} {
+				return &Context{
+					params: make([]*Param, 0),
+				}
+			},
+		},
 	}
 }
 
-func (r *Router) GET(endpoint string, handler http.Handler) {
+func (r *Router) GET(endpoint string, handler CustomHandler) {
 	r.insert(http.MethodGet, endpoint, handler)
 }
 
-func (r *Router) insert(method, endpoint string, handler http.Handler) {
+func (r *Router) insert(method, endpoint string, handler CustomHandler) {
 	currentNode := r.tree
 
 	for {
@@ -232,7 +265,7 @@ func backTrack(n *Node, endpoint string) (*Node, string) {
 	}
 }
 
-func (r *Router) Search(method, endpoint string) (http.Handler, []*Param) {
+func (r *Router) Search(method, endpoint string) (CustomHandler, []*Param) {
 	currentNode := r.tree
 	var params []*Param
 
@@ -277,15 +310,18 @@ func PathParam(r *http.Request, key string) string {
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	ctx := r.pool.Get().(*Context)
 	handler, params := r.Search(req.Method, req.URL.Path)
+	ctx.r = req
+	ctx.w = w
+	ctx.params = params
 	if handler != nil {
-		if len(params) != 0 {
-			req = req.WithContext(context.WithValue(req.Context(), paramsKey{}, params))
-		}
-		handler.ServeHTTP(w, req)
+		handler(ctx)
+		r.pool.Put(ctx)
 		return
 	}
 
 	w.WriteHeader(http.StatusNotFound)
 	w.Write([]byte("404 Not Found"))
+	r.pool.Put(ctx)
 }
