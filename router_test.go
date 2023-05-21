@@ -1,7 +1,6 @@
 package myrouter
 
 import (
-	"fmt"
 	"net/http"
 	"reflect"
 	"testing"
@@ -182,11 +181,7 @@ func TestRouter_Search(t *testing.T) {
 
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
-			handler, params := r.Search(http.MethodGet, testcase.accessendpoint)
-
-			for _, p := range params {
-				fmt.Printf("key: %s\nvalue: %s\n", p.key, p.value)
-			}
+			handler, _ := r.Search(http.MethodGet, testcase.accessendpoint)
 
 			// 関数のポインタを比較する
 			if reflect.ValueOf(handler).Pointer() != reflect.ValueOf(testcase.handler).Pointer() {
@@ -225,8 +220,6 @@ func TestRouter_ServeHTTP(t *testing.T) {
 			setendpoint:    "/hoge/:profile",
 			accessendpoint: "/hoge/www1",
 			handler: func(c *Context) {
-				p := c.Param("profile")
-				fmt.Println(p)
 			},
 		},
 		{
@@ -234,8 +227,6 @@ func TestRouter_ServeHTTP(t *testing.T) {
 			setendpoint:    "/:foo/hoge",
 			accessendpoint: "/www/hoge",
 			handler: func(c *Context) {
-				p := c.Param("foo")
-				fmt.Println(p)
 			},
 		},
 	}
