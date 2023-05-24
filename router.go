@@ -187,14 +187,15 @@ func (r *Router) staticSearch(currentNode *Node, method, endpoint string) (*Node
 			return currentNode, endpoint
 		}
 
+		endpointLen := len(endpoint)
 		maxLen := len(nextNode.prefix)
-		if len(endpoint) < maxLen {
-			maxLen = len(endpoint)
-		}
-
 		lcpIndex := 0
-		for lcpIndex < maxLen && endpoint[lcpIndex] == nextNode.prefix[lcpIndex] {
-			lcpIndex++
+		if endpointLen < maxLen {
+			for lcpIndex < maxLen && endpoint[lcpIndex] == nextNode.prefix[lcpIndex] {
+				lcpIndex++
+			}
+		} else {
+			lcpIndex = maxLen
 		}
 
 		currentNode = nextNode
