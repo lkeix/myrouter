@@ -2,3 +2,5 @@ github.com/lkeix/myrouter v0.0.0-20230312055626-86f1a7bdb48c h1:NvZ5jOlLotavbX4H
 github.com/lkeix/myrouter v0.0.0-20230312055626-86f1a7bdb48c/go.mod h1:UjMGUSUNMz7GhNFW+0BjvOdpboU/IiZ6LVys1ISeN1g=
 github.com/lkeix/myrouter v0.0.0-20230514100735-ed3dbd93f5e3 h1:AU5P1N/A6VVIvB7GAe8HI0g3lojE6ykRCXJZGJHGfUc=
 github.com/lkeix/myrouter v0.0.0-20230514100735-ed3dbd93f5e3/go.mod h1:4cj4YpzIcJ35N04VR896OSH/ZOfYAO2MLO4ZBYsda3M=
+github.com/lkeix/myrouter v0.0.0 h1:1ADXA7fbUr4bjC3d0kyZO5J/dsB0J8pWPHxIV5I5SzQ=
+github.com/lkeix/myrouter v0.0.0/go.mod h1:UjMGUSUNMz7GhNFW+0BjvOdpboU/IiZ6LVys1ISeN1g=

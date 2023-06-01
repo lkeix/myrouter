@@ -5,11 +5,11 @@ import (
 	"testing"
 )
 
-type Router struct {
+type TrieRouter struct {
 	root *node
 }
 
-func (r *Router) Insert(path string, value int) {
+func (r *TrieRouter) Insert(path string, value int) {
 	search := path
 	now := r.root
 	for {
@@ -36,7 +36,7 @@ func (r *Router) Insert(path string, value int) {
 	}
 }
 
-func (r *Router) Search(path string) int {
+func (r *TrieRouter) Search(path string) int {
 	search := path
 	now := r.root
 	for {
@@ -54,7 +54,7 @@ func (r *Router) Search(path string) int {
 }
 
 func TestInsertAndSearch(t *testing.T) {
-	r := &Router{
+	r := &TrieRouter{
 		root: &node{
 			children: make([]*node, 0),
 		},
@@ -102,14 +102,15 @@ func BenchmarkTrie(b *testing.B) {
 	b.ResetTimer()
 	paths := []string{
 		"/health",
+		"/hogehoge",
 		"/fuga",
 	}
 
 	values := []int{
-		1, 2,
+		1, 2, 3,
 	}
 
-	r := &Router{
+	r := &TrieRouter{
 		root: &node{
 			children: make([]*node, 0),
 		},
@@ -119,8 +120,11 @@ func BenchmarkTrie(b *testing.B) {
 		r.Insert(path, values[i])
 	}
 	for i := 0; i < b.N; i++ {
-		for _, path := range paths {
-			r.Search(path)
+		for j, path := range paths {
+			v := r.Search(path)
+			if values[j] != v {
+				panic("invalid search data")
+			}
 		}
 	}
 }

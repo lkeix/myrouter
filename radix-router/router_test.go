@@ -9,11 +9,11 @@ import (
 
 func defineRadixRouter() *myrouter.Router {
 	r := myrouter.NewRouter()
-	r.GET("/", func(ctx *myrouter.Context) {})
-	r.GET("/hoge", func(ctx *myrouter.Context) {})
-	r.GET("/fuga", func(ctx *myrouter.Context) {})
-	r.GET("/hoge/fuga", func(ctx *myrouter.Context) {})
-	r.GET("/fuga/hoge", func(ctx *myrouter.Context) {})
+	r.GET("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	r.GET("/hoge", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	r.GET("/fuga", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	r.GET("/hoge/fuga", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	r.GET("/fuga/hoge", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	return r
 }
 
